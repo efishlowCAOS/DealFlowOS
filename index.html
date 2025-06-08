@@ -10,6 +10,16 @@
   <h1 class="text-4xl font-bold text-center">Welcome to DealFlowOS</h1>
 
   <section class="w-full max-w-2xl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DealFlowOS</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+  <h1 class="text-4xl font-bold text-center mb-10">Welcome to DealFlowOS</h1>
+
+  <section id="latest" class="max-w-4xl mx-auto mb-12">
     <h2 class="text-2xl font-semibold mb-4">Latest Deals</h2>
     
     <div class="space-y-4">
@@ -17,19 +27,131 @@
         <h3 class="text-lg font-bold">SaaS Uptime Monitor</h3>
         <p class="text-sm text-gray-600">Platform: Flippa</p>
         <p class="text-sm text-gray-600">Price: $8,500 — Profit: $400/mo</p>
+    <div id="deal-list" class="grid gap-4 md:grid-cols-3"></div>
+  </section>
+
+  <section id="pipeline" class="max-w-6xl mx-auto">
+    <h2 class="text-2xl font-semibold mb-4">My Pipeline</h2>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div>
+        <h3 class="font-bold mb-2 text-center">Interested</h3>
+        <div id="stage-0" class="space-y-3"></div>
+      </div>
+      <div>
+        <h3 class="font-bold mb-2 text-center">Contacted</h3>
+        <div id="stage-1" class="space-y-3"></div>
       </div>
       <div class="p-4 bg-white shadow rounded">
         <h3 class="text-lg font-bold">AI Tweet Writer Tool</h3>
         <p class="text-sm text-gray-600">Platform: IndieMaker</p>
         <p class="text-sm text-gray-600">Price: $1,200 — Profit: $80/mo</p>
+      <div>
+        <h3 class="font-bold mb-2 text-center">In Diligence</h3>
+        <div id="stage-2" class="space-y-3"></div>
       </div>
       <div class="p-4 bg-white shadow rounded">
         <h3 class="text-lg font-bold">Shopify Niche Store</h3>
         <p class="text-sm text-gray-600">Platform: Acquire</p>
         <p class="text-sm text-gray-600">Price: $3,000 — Profit: $250/mo</p>
+      <div>
+        <h3 class="font-bold mb-2 text-center">Acquired</h3>
+        <div id="stage-3" class="space-y-3"></div>
       </div>
     </div>
   </section>
 </body>
 
+  <script>
+  const latestDeals = [
+    {id: 1, title: "SaaS Uptime Monitor", platform: "Flippa", price: "$8,500", profit: "$400/mo"},
+    {id: 2, title: "AI Tweet Writer Tool", platform: "IndieMaker", price: "$1,200", profit: "$80/mo"},
+    {id: 3, title: "Shopify Niche Store", platform: "Acquire", price: "$3,000", profit: "$250/mo"}
+  ];
+
+  const stageNames = ["Interested", "Contacted", "In Diligence", "Acquired"];
+  const STORAGE_KEY = "savedDeals";
+
+  function loadSavedDeals() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveDeals(deals) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(deals));
+  }
+
+  function addDealToPipeline(deal) {
+    const deals = loadSavedDeals();
+    if (!deals.find(d => d.id === deal.id)) {
+      deals.push({...deal, stage: 0});
+      saveDeals(deals);
+      renderPipeline();
+    }
+  }
+
+  function moveDeal(id) {
+    const deals = loadSavedDeals();
+    const deal = deals.find(d => d.id === id);
+    if (deal && deal.stage < stageNames.length - 1) {
+      deal.stage += 1;
+      saveDeals(deals);
+      renderPipeline();
+    }
+  }
+
+  function renderLatestDeals() {
+    const container = document.getElementById('deal-list');
+    container.innerHTML = '';
+    latestDeals.forEach(deal => {
+      const card = document.createElement('div');
+      card.className = 'p-4 bg-white shadow rounded space-y-1';
+      card.innerHTML = `<h3 class="text-lg font-bold">${deal.title}</h3>
+        <p class="text-sm text-gray-600">Platform: ${deal.platform}</p>
+        <p class="text-sm text-gray-600">Price: ${deal.price} — Profit: ${deal.profit}</p>`;
+      const btn = document.createElement('button');
+      btn.className = 'mt-2 px-2 py-1 bg-blue-500 text-white rounded text-sm';
+      btn.textContent = 'Save to Pipeline';
+      btn.addEventListener('click', () => addDealToPipeline(deal));
+      card.appendChild(btn);
+      container.appendChild(card);
+    });
+  }
+
+  function createPipelineCard(deal) {
+    const card = document.createElement('div');
+    card.className = 'p-3 bg-white shadow rounded text-sm';
+    card.innerHTML = `<div class="font-semibold">${deal.title}</div>
+      <div class="text-gray-600">Platform: ${deal.platform}</div>
+      <div class="text-gray-600">Price: ${deal.price}</div>
+      <div class="text-gray-600">Profit: ${deal.profit}</div>`;
+    if (deal.stage < stageNames.length - 1) {
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'mt-2 px-2 py-1 bg-green-500 text-white rounded';
+      nextBtn.textContent = `Move to ${stageNames[deal.stage + 1]}`;
+      nextBtn.addEventListener('click', () => moveDeal(deal.id));
+      card.appendChild(nextBtn);
+    }
+    return card;
+  }
+
+  function renderPipeline() {
+    stageNames.forEach((_, idx) => {
+      document.getElementById(`stage-${idx}`).innerHTML = '';
+    });
+    const deals = loadSavedDeals();
+    deals.forEach(deal => {
+      const column = document.getElementById(`stage-${deal.stage}`);
+      column.appendChild(createPipelineCard(deal));
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    renderLatestDeals();
+    renderPipeline();
+  });
+  </script>
+</body>
 </html>
